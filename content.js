@@ -28,15 +28,6 @@ function findPlayerByNameAndTeam(elements, teams, playerName, teamName) {
   });
 }
 
-// Function to get the current season based on the current month
-function getCurrentSeason() {
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  return currentMonth >= 7
-    ? `${currentYear}-${currentYear + 1}`
-    : `${currentYear - 1}-${currentYear}`;
-}
-
 // Function to save the cache to localStorage
 function saveCacheToLocalStorage() {
   localStorage.setItem("imageCache", JSON.stringify([...imageCache]));
