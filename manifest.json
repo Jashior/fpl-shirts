@@ -6,7 +6,6 @@
     "permissions": [
         "activeTab",
         "https://fantasy.premierleague.com/*",
-        "https://fpldict.zanaris.dev/",
         "https://resources.premierleague.com/*"
     ],
     "content_scripts": [

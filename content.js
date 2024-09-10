@@ -1,17 +1,31 @@
-// Function to fetch and parse the CSV data
 async function fetchPlayerData() {
   try {
-    const response = await fetch("https://fpldict.zanaris.dev/code_dict.csv");
-    const text = await response.text();
-    const rows = text.split("\n").map((row) => row.split(","));
-    const headers = rows.shift();
-    const playerData = rows.map((row) =>
-      Object.fromEntries(headers.map((header, i) => [header, row[i]]))
+    const response = await fetch(
+      "https://fantasy.premierleague.com/api/bootstrap-static/"
     );
-    return playerData;
+    const data = await response.json();
+    return { elements: data.elements, teams: data.teams };
   } catch (error) {
-    return [];
+    console.error("Error fetching data:", error);
+    return { elements: [], teams: [] };
   }
+}
+
+function getTeamNameById(teams, teamId) {
+  const team = teams.find((team) => team.id === teamId);
+  return team ? team.name : null;
+}
+
+function findPlayerByNameAndTeam(elements, teams, playerName, teamName) {
+  return elements.find((player) => {
+    const webName = player.web_name;
+    const playerTeamName = getTeamNameById(teams, player.team);
+
+    return (
+      webName.toLowerCase().includes(playerName.toLowerCase()) &&
+      playerTeamName.toLowerCase() === teamName.toLowerCase()
+    );
+  });
 }
 
 // Function to get the current season based on the current month
@@ -73,9 +87,9 @@ function debounce(func, delay) {
 }
 
 async function replaceShirtImages(playerData) {
-  // console.log("Replacing shirt images...");
+  const { elements, teams } = playerData;
+
   const playerElements = document.querySelectorAll('[class*="PitchElement"]');
-  // console.log("Found", playerElements.length, "player elements");
 
   for (const playerElement of playerElements) {
     const shirtElement = playerElement.querySelector(
@@ -98,34 +112,29 @@ async function replaceShirtImages(playerData) {
     const teamName = shirtElement.alt; // Get team name from website
     // console.log("Processing player:", playerName, "Team:", teamName);
 
-    const currentSeason = getCurrentSeason();
-    const teamKey = `Team_${currentSeason}`;
-
-    const player = playerData.find(
-      (p) =>
-        p.Web_Name?.toLowerCase().includes(playerName.toLowerCase()) &&
-        (p[teamKey]?.toLowerCase() === teamName.toLowerCase() || // Check for the current season
-          (!p[teamKey] && // If current season team is not available
-            Object.keys(p).some(
-              (key) =>
-                key.startsWith("Team_") &&
-                p[key]?.toLowerCase() === teamName.toLowerCase()
-            )))
+    const player = findPlayerByNameAndTeam(
+      elements,
+      teams,
+      playerName,
+      teamName
     );
 
+    // console.log(player);
+
     if (player) {
-      // console.log("Player found:", player.Web_Name, "Code:", player.Code);
+      // console.log("Player found:", player.web_name, "Code:", player.code);
       const pictureElement =
         shirtElement.closest("picture") || shirtElement.parentElement;
       if (pictureElement) {
-        // console.log("Player found:", player.Web_Name, "Code:", player.Code);
+        // console.log("Player found:", player.web_name, "Code:", player.code);
+
         const imgElement = pictureElement.querySelector("img");
         const sourceElements = pictureElement.querySelectorAll("source");
 
-        const newSrc = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.Code}.png`;
+        const newSrc = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`;
         const newSrcSet = `
-                  https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.Code}.png 110w,
-                  https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.Code}.png 250w
+                  https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png 110w,
+                  https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.code}.png 250w
               `;
 
         // Check if the current src and srcset are already as expected
@@ -158,7 +167,7 @@ async function replaceShirtImages(playerData) {
                 "(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px";
             });
           } else {
-            console.log("Image does not exist for player:", player.FPL_Name);
+            console.log("Image does not exist for player:", player.web_name);
           }
         }
       } else {
@@ -174,7 +183,7 @@ async function main() {
   const playerData = await fetchPlayerData();
   // console.log("Fetched player data, count:", playerData.length);
 
-  if (playerData.length > 0) {
+  if (playerData.elements.length > 0 && playerData.teams.length > 0) {
     await replaceShirtImages(playerData);
 
     const debouncedReplaceShirtImages = debounce((playerData) => {
