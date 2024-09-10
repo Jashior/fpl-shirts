@@ -54,12 +54,12 @@ async function imageExists(url) {
     const response = await fetch(url, { method: "HEAD" });
     const exists = response.ok;
     imageCache.set(url, exists);
-    saveCacheToLocalStorage(); // Save the cache to localStorage
+    saveCacheToLocalStorage();
     return exists;
   } catch (error) {
     console.error("Error checking image:", error);
     imageCache.set(url, false);
-    saveCacheToLocalStorage(); // Save the cache to localStorage
+    saveCacheToLocalStorage();
     return false;
   }
 }
