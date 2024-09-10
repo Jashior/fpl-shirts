@@ -1,8 +1,13 @@
 {
     "manifest_version": 3,
     "name": "FPL Shirt Photo Replacer",
-    "version": "2.6",
+    "version": "3.1",
     "description": "Replaces FPL shirt images with player photos",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "{42401307-c336-4b1c-aee4-31d5977945fd}"
+        }
+    },
     "content_scripts": [
         {
             "matches": [

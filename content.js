@@ -22,7 +22,7 @@ function findPlayerByNameAndTeam(elements, teams, playerName, teamName) {
     const playerTeamName = getTeamNameById(teams, player.team);
 
     return (
-      webName.toLowerCase().includes(playerName.toLowerCase()) &&
+      webName.toLowerCase() == playerName.toLowerCase() &&
       playerTeamName.toLowerCase() === teamName.toLowerCase()
     );
   });
