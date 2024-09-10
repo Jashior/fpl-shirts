@@ -4,7 +4,8 @@
     "version": "2.5",
     "description": "Replaces FPL shirt images with player photos",
     "permissions": [
-        "activeTab"
+        "activeTab",
+        "webRequest"
     ],
     "content_scripts": [
         {
