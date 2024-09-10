@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FPL Shirt Photo Replacer",
-    "version": "2.5",
+    "version": "2.6",
     "description": "Replaces FPL shirt images with player photos",
     "permissions": [
         "activeTab",
