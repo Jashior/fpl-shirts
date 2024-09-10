@@ -77,7 +77,6 @@ function replaceShirtImages(playerData) {
 }
 
 async function main() {
-  console.log(`contente.js`);
   const playerData = await fetchPlayerData();
   if (playerData.length > 0) {
     replaceShirtImages(playerData);

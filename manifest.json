@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "FPL Player Photo Replacer",
-    "version": "1.2",
+    "version": "1.3",
     "description": "Replaces FPL shirt images with player photos",
     "permissions": [
         "activeTab",
@@ -9,12 +9,6 @@
         "https://fpldict.zanaris.dev/",
         "https://resources.premierleague.com/*"
     ],
-    "background": {
-        "scripts": [
-            "background.js"
-        ],
-        "persistent": false
-    },
     "content_scripts": [
         {
             "matches": [
@@ -22,6 +16,9 @@
             ],
             "js": [
                 "content.js"
+            ],
+            "css": [
+                "style.css"
             ]
         }
     ]
