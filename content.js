@@ -73,7 +73,7 @@ function debounce(func, delay) {
 }
 
 async function replaceShirtImages(playerData) {
-  console.log("Replacing shirt images...");
+  // console.log("Replacing shirt images...");
   const playerElements = document.querySelectorAll('[class*="PitchElement"]');
   // console.log("Found", playerElements.length, "player elements");
 
@@ -118,7 +118,7 @@ async function replaceShirtImages(playerData) {
       const pictureElement =
         shirtElement.closest("picture") || shirtElement.parentElement;
       if (pictureElement) {
-        console.log("Player found:", player.Web_Name, "Code:", player.Code);
+        // console.log("Player found:", player.Web_Name, "Code:", player.Code);
         const imgElement = pictureElement.querySelector("img");
         const sourceElements = pictureElement.querySelectorAll("source");
 
@@ -133,9 +133,9 @@ async function replaceShirtImages(playerData) {
         const isSrcSetUpdated =
           sourceElements.length > 0 && sourceElements[0].srcset !== newSrcSet;
         const updateRequired = isSrcUpdated || isSrcSetUpdated;
-        console.log(`upgradeRequired: ${updateRequired}`);
+        // console.log(`upgradeRequired: ${updateRequired}`);
         if (updateRequired) {
-          console.log(player.Web_Name);
+          // console.log(player.Web_Name);
           const exists = await imageExists(newSrc);
           if (exists) {
             // console.log("player exists!");
@@ -175,11 +175,11 @@ async function main() {
   // console.log("Fetched player data, count:", playerData.length);
 
   if (playerData.length > 0) {
-    replaceShirtImages(playerData);
+    await replaceShirtImages(playerData);
 
     const debouncedReplaceShirtImages = debounce((playerData) => {
       replaceShirtImages(playerData);
-    }, 300); // Adjust debounce delay as needed
+    }, 0); // Adjust debounce delay as needed
 
     const observer = new MutationObserver((mutations) => {
       // console.log("Mutation detected:", mutations.length, "changes");
