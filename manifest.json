@@ -5,7 +5,7 @@
     "description": "Replaces FPL shirt images with player photos",
     "permissions": [
         "activeTab",
-        "https://raw.githubusercontent.com/Jashior/fpl_code_understat_dict*",
+        "https://fpldict.zanaris.dev/code_dict.csv",
         "https://resources.premierleague.com/*"
     ],
     "content_scripts": [

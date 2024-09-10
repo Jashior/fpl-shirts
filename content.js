@@ -1,11 +1,7 @@
-// Content script for the Firefox extension
-
 // Function to fetch and parse the CSV data
 async function fetchPlayerData() {
   try {
-    const response = await fetch(
-      "https://raw.githubusercontent.com/Jashior/fpl_code_understat_dict/master/code_dict.csv"
-    );
+    const response = await fetch("https://fpldict.zanaris.dev/code_dict.csv");
     const text = await response.text();
     const rows = text.split("\n").map((row) => row.split(","));
     const headers = rows.shift();
@@ -16,6 +12,15 @@ async function fetchPlayerData() {
   } catch (error) {
     return [];
   }
+}
+
+// Function to get the current season based on the current month
+function getCurrentSeason() {
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  return currentMonth >= 7
+    ? `${currentYear}-${currentYear + 1}`
+    : `${currentYear - 1}-${currentYear}`;
 }
 
 // Function to replace shirt images with player photos
@@ -34,11 +39,19 @@ function replaceShirtImages(playerData) {
 
     const playerName = playerNameElement.textContent.trim();
     const teamName = shirtElement.alt;
+    const currentSeason = getCurrentSeason();
+    const teamKey = `Team_${currentSeason}`;
 
     const player = playerData.find(
       (p) =>
         p.Web_Name?.toLowerCase().includes(playerName.toLowerCase()) &&
-        p["Team_2024-25"].toLowerCase() === teamName.toLowerCase()
+        (p[teamKey]?.toLowerCase() === teamName.toLowerCase() || // Check for the current season
+          (!p[teamKey] && // If current season team is not available
+            Object.keys(p).some(
+              (key) =>
+                key.startsWith("Team_") &&
+                p[key]?.toLowerCase() === teamName.toLowerCase()
+            ))) // Check for any available team from previous seasons
     );
 
     if (player) {
@@ -63,7 +76,6 @@ function replaceShirtImages(playerData) {
   });
 }
 
-// Main function to run the script
 async function main() {
   const playerData = await fetchPlayerData();
   if (playerData.length > 0) {
@@ -77,5 +89,4 @@ async function main() {
   }
 }
 
-// Run the main function
 main();
