@@ -52,7 +52,7 @@ async function imageExists(url) {
   }
 
   if (imageCache.has(url)) {
-    return imageCache.get(url);
+    return true;
   }
 
   try {
@@ -172,7 +172,7 @@ async function replaceShirtImages(playerData) {
 
 async function main() {
   const playerData = await fetchPlayerData();
-  // console.log("Fetched player data, count:", playerData.length);
+  console.log("Fetched player data, count:", playerData.length);
 
   if (playerData.elements.length > 0 && playerData.teams.length > 0) {
     await replaceShirtImages(playerData);
