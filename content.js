@@ -28,17 +28,8 @@ function findPlayerByNameAndTeam(elements, teams, playerName, teamName) {
   });
 }
 
-function debounce(func, delay) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), delay);
-  };
-}
-
 async function replaceShirtImages(playerData) {
   const { elements, teams } = playerData;
-
   const playerElements = document.querySelectorAll('[class*="PitchElement"]');
 
   for (const playerElement of playerElements) {
@@ -117,6 +108,14 @@ async function replaceShirtImages(playerData) {
       }
     }
   }
+}
+
+function debounce(func, delay) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 async function main() {
