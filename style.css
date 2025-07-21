@@ -1,16 +1,36 @@
-.styles__PitchCard-sc-hv19ot-2.styles__StyledPitchElement-sc-hv19ot-5:not(:has(span.kCdICl)) {
-    padding-right: 12px;
+/* Only apply styles to images within a button on the main pitch area */
+._1k6tww10 button[data-pitch-element="true"] img.e4m1qw0 {
+    background-color: transparent;
+    border-radius: 0;
 }
 
-.styles__ElementCost-sc-hv19ot-6 {
-    position: relative;
-    z-index: 1; 
-    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.5);
+/* This is the container for the player info on the pitch */
+._1k6tww10 button[data-pitch-element="true"] ._5supsj3 {
+    position: relative; /* Anchor for the price overlay */
+    height: 100%;
 }
 
-.styles__PitchElementIconsWrap-sc-hv19ot-10    {
-    z-index: 2
+/* Style for the player's price to overlay it on the photo */
+._1k6tww10 button[data-pitch-element="true"] ._5supsj4 {
+    position: absolute;
+    top: 5px; /* Position it 5px from the top */
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content; /* Adjust width to content */
+    z-index: 1;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1;
 }
-.styles__InfoControl-sc-hv19ot-11{
-    z-index: 2
+
+/* Ensure the info/substitute icons are on top of the player photo and price */
+._1k6tww10 .rbwqxk1, ._1k6tww10 .rbwqxk4 {
+    z-index: 2;
 }
