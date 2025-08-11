@@ -1,11 +1,15 @@
 const playersData = {};
 
+const manualPhotoOverrides = {
+  Anderson: '215379',
+};
+
 let playerDataPromise = null;
 
 const fetchPlayerData = async () => {
   if (playerDataPromise) return playerDataPromise;
   playerDataPromise = fetch(
-    "https://fantasy.premierleague.com/api/bootstrap-static/"
+    'https://fantasy.premierleague.com/api/bootstrap-static/'
   )
     .then((response) => response.json())
     .then((data) => {
@@ -14,9 +18,69 @@ const fetchPlayerData = async () => {
       });
     })
     .catch((error) => {
-      console.error("Error fetching FPL data:", error);
+      console.error('Error fetching FPL data:', error);
     });
   return playerDataPromise;
+};
+
+const setPlayerImage = (picture, player) => {
+  const img = picture.querySelector('img');
+  if (!img) return;
+
+  const playerName = player.web_name;
+  const photoCode = player.photo.replace('.jpg', '');
+
+  const finalPhotoCode = manualPhotoOverrides[playerName] || photoCode;
+
+  const urlsToTry = [
+    {
+      url: `https://resources.premierleague.com/premierleague25/photos/players/110x140/${finalPhotoCode}.png`,
+      url2x: `https://resources.premierleague.com/premierleague25/photos/players/250x250/${finalPhotoCode}.png`,
+    },
+    {
+      url: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${finalPhotoCode}.png`,
+      url2x: `https://resources.premierleague.com/premierleague/photos/players/250x250/p${finalPhotoCode}.png`,
+    },
+  ];
+
+  const tryLoadImage = (index) => {
+    if (index >= urlsToTry.length) {
+      console.error(
+        `All image URLs failed for ${playerName}. Applying fallback.`
+      );
+      img.src =
+        'https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png';
+      const sources = picture.querySelectorAll('source');
+      sources.forEach((source) => {
+        source.srcset =
+          'https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png';
+      });
+      picture.setAttribute('data-last-player', playerName);
+      return;
+    }
+
+    const { url, url2x } = urlsToTry[index];
+    const image = new Image();
+    image.src = url;
+
+    image.onload = () => {
+      const sources = picture.querySelectorAll('source');
+      sources.forEach((source) => {
+        source.srcset = `${url} 1x, ${url2x} 2x`;
+        source.sizes =
+          '(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px';
+      });
+      img.src = url;
+      img.style.cssText = `position: absolute; top: 0; left: 0; right: 30%; width: 100%; height: 110%; object-fit: cover; object-position: top center; padding-top: 10%; padding-bottom: 20%;`;
+      picture.setAttribute('data-last-player', playerName);
+    };
+
+    image.onerror = () => {
+      tryLoadImage(index + 1);
+    };
+  };
+
+  tryLoadImage(0);
 };
 
 const replaceShirtImages = () => {
@@ -25,49 +89,13 @@ const replaceShirtImages = () => {
   );
 
   buttons.forEach((button) => {
-    const picture = button.querySelector("picture");
+    const picture = button.querySelector('picture');
     if (picture) {
-      const img = picture.querySelector("img");
-      const playerName = button.getAttribute("aria-label");
-      const lastPlayer = picture.getAttribute("data-last-player");
+      const playerName = button.getAttribute('aria-label');
+      const lastPlayer = picture.getAttribute('data-last-player');
 
       if (playerName && playersData[playerName] && lastPlayer !== playerName) {
-        const player = playersData[playerName];
-        const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace(
-          ".jpg",
-          ""
-        )}.png`;
-        const photo2xUrl = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.photo.replace(
-          ".jpg",
-          ""
-        )}.png`;
-
-        const image = new Image();
-        image.src = photoUrl;
-        image.onload = () => {
-          const sources = picture.querySelectorAll("source");
-          sources.forEach((source) => {
-            source.srcset = `${photoUrl} 1x, ${photo2xUrl} 2x`;
-            source.sizes =
-              "(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px";
-          });
-          img.src = photoUrl;
-          img.style.cssText = `position: absolute; top: 0; left: 0; right: 30%; width: 100%; height: 110%; object-fit: cover; object-position: top center; padding-top: 10%; padding-bottom: 20%;`;
-          picture.setAttribute("data-last-player", playerName);
-        };
-        image.onerror = () => {
-          console.error(
-            `Image failed to load for ${playerName}: ${photoUrl}. Applying fallback.`
-          );
-          img.src =
-            "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
-          const sources = picture.querySelectorAll("source");
-          sources.forEach((source) => {
-            source.srcset =
-              "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
-          });
-          picture.setAttribute("data-last-player", playerName);
-        };
+        setPlayerImage(picture, playersData[playerName]);
       }
     }
   });
@@ -85,41 +113,11 @@ const startObserver = () => {
 
 // Utility: Replace shirt image for a single button
 function replaceShirtImageForButton(button) {
-  const picture = button.querySelector("picture");
+  const picture = button.querySelector('picture');
   if (picture) {
-    const img = picture.querySelector("img");
-    const playerName = button.getAttribute("aria-label");
+    const playerName = button.getAttribute('aria-label');
     if (playerName && playersData[playerName]) {
-      const player = playersData[playerName];
-      const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace(
-        ".jpg",
-        ""
-      )}.png`;
-      const photo2xUrl = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.photo.replace(
-        ".jpg",
-        ""
-      )}.png`;
-      const image = new Image();
-      image.src = photoUrl;
-      image.onload = () => {
-        const sources = picture.querySelectorAll("source");
-        sources.forEach((source) => {
-          source.srcset = `${photoUrl} 1x, ${photo2xUrl} 2x`;
-          source.sizes =
-            "(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px";
-        });
-        img.src = photoUrl;
-        img.style.cssText = `position: absolute; top: 0; left: 0; right: 30%; width: 100%; height: 110%; object-fit: cover; object-position: top center; padding-top: 10%; padding-bottom: 20%;`;
-      };
-      image.onerror = () => {
-        img.src =
-          "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
-        const sources = picture.querySelectorAll("source");
-        sources.forEach((source) => {
-          source.srcset =
-            "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
-        });
-      };
+      setPlayerImage(picture, playersData[playerName]);
     }
   }
 }
@@ -139,8 +137,8 @@ function observePlayerButtons() {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "aria-label"
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'aria-label'
         ) {
           replaceShirtImageForButton(button);
         }
@@ -148,7 +146,7 @@ function observePlayerButtons() {
     });
     observer.observe(button, {
       attributes: true,
-      attributeFilter: ["aria-label"],
+      attributeFilter: ['aria-label'],
     });
   });
 }
