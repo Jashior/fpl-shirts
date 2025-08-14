@@ -147,38 +147,15 @@ const setPlayerImage = (picture, player) => {
   tryLoadImage(0);
 };
 
-const replaceShirtImages = async () => {
-  const buttons = document.querySelectorAll(
-    '._1k6tww10 button[data-pitch-element="true"]'
-  );
-
-  for (const button of buttons) {
-    const picture = button.querySelector('picture');
-    if (picture) {
-      const lastPlayerName = picture.getAttribute('data-last-player');
-      const player = await getPlayerForButton(button);
-
-      if (player && lastPlayerName !== player.web_name) {
-        setPlayerImage(picture, player);
-      }
-    }
-  }
-};
-
-const observer = new MutationObserver(replaceShirtImages);
-
-const startObserver = () => {
-  const targetNode = document.body;
-  const config = { childList: true, subtree: true };
-  observer.observe(targetNode, config);
-};
-
 const replaceShirtImageForButton = async (button) => {
   const picture = button.querySelector('picture');
   if (picture) {
     const player = await getPlayerForButton(button);
     if (player) {
-      setPlayerImage(picture, player);
+      const lastPlayerName = picture.getAttribute('data-last-player');
+      if (lastPlayerName !== player.web_name) {
+        setPlayerImage(picture, player);
+      }
     }
   }
 };
@@ -193,7 +170,7 @@ const observePlayerButtons = () => {
 
     replaceShirtImageForButton(button);
 
-    const observer = new MutationObserver(async (mutations) => {
+    const buttonObserver = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (
           mutation.type === 'attributes' &&
@@ -203,11 +180,19 @@ const observePlayerButtons = () => {
         }
       }
     });
-    observer.observe(button, {
+    buttonObserver.observe(button, {
       attributes: true,
       attributeFilter: ['aria-label'],
     });
   });
+};
+
+const mainObserver = new MutationObserver(observePlayerButtons);
+
+const startMainObserver = () => {
+  const targetNode = document.body;
+  const config = { childList: true, subtree: true };
+  mainObserver.observe(targetNode, config);
 };
 
 const waitForPitchElementsAndObserve = (maxAttempts = 20, interval = 150) => {
@@ -220,6 +205,7 @@ const waitForPitchElementsAndObserve = (maxAttempts = 20, interval = 150) => {
     if (buttons.length > 0 && buttons.length === lastCount) {
       fetchPlayerData().then(() => {
         observePlayerButtons();
+        startMainObserver();
       });
     } else if (attempts < maxAttempts) {
       lastCount = buttons.length;
@@ -228,6 +214,7 @@ const waitForPitchElementsAndObserve = (maxAttempts = 20, interval = 150) => {
     } else {
       fetchPlayerData().then(() => {
         observePlayerButtons();
+        startMainObserver();
       });
     }
   };
@@ -243,7 +230,4 @@ new MutationObserver(() => {
   }
 }).observe(document, { subtree: true, childList: true });
 
-fetchPlayerData().then(() => {
-  observePlayerButtons();
-  startObserver();
-});
+waitForPitchElementsAndObserve();
