@@ -3,13 +3,37 @@ const teamsDataByShortName = {};
 const playersData = {};
 let fixturesData = [];
 
+// Mapping for various team name formats found in alt text
+const teamNameMappings = {
+  Arsenal: "ARS",
+  "Aston Villa": "AVL",
+  Bournemouth: "BOU",
+  Brentford: "BRE",
+  Brighton: "BHA",
+  Burnley: "BUR",
+  Chelsea: "CHE",
+  "Crystal Palace": "CRY",
+  Everton: "EVE",
+  Fulham: "FUL",
+  Leeds: "LEE",
+  Liverpool: "LIV",
+  "Man City": "MCI",
+  "Man Utd": "MUN",
+  Newcastle: "NEW",
+  "Nott'm Forest": "NFO",
+  Sunderland: "SUN",
+  Spurs: "TOT",
+  "West Ham": "WHU",
+  Wolves: "WOL",
+};
+
 let playerDataPromise = null;
 let fixtureDataPromise = null;
 
 const fetchPlayerData = async () => {
   if (playerDataPromise) return playerDataPromise;
   playerDataPromise = fetch(
-    'https://fantasy.premierleague.com/api/bootstrap-static/'
+    "https://fantasy.premierleague.com/api/bootstrap-static/"
   )
     .then((response) => response.json())
     .then((data) => {
@@ -26,26 +50,26 @@ const fetchPlayerData = async () => {
       });
     })
     .catch((error) => {
-      console.error('Error fetching FPL data:', error);
+      // Error fetching FPL data
     });
   return playerDataPromise;
 };
 
 const fetchFixtures = async () => {
   if (fixtureDataPromise) return fixtureDataPromise;
-  fixtureDataPromise = fetch('https://fantasy.premierleague.com/api/fixtures/')
+  fixtureDataPromise = fetch("https://fantasy.premierleague.com/api/fixtures/")
     .then((response) => response.json())
     .then((data) => {
       fixturesData = data;
     })
     .catch((error) => {
-      console.error('Error fetching fixture data:', error);
+      // Error fetching fixture data
     });
   return fixtureDataPromise;
 };
 
 const getPlayerForButton = async (button) => {
-  const playerName = button.getAttribute('aria-label');
+  const playerName = button.getAttribute("aria-label");
   if (!playerName || !playersData[playerName]) {
     return null;
   }
@@ -55,7 +79,44 @@ const getPlayerForButton = async (button) => {
     return candidates[0];
   }
 
-  // Tier 2: Fixture-Based Disambiguation
+  // Tier 2: Team-Based Disambiguation using shirt image alt text
+  const picture = button.querySelector("picture");
+  if (picture) {
+    const img = picture.querySelector("img");
+    if (img && img.alt) {
+      const teamNameFromAlt = img.alt.trim();
+
+      // Try multiple approaches to find the team
+      let team = null;
+
+      // First try direct lookup by short name
+      team = teamsDataByShortName[teamNameFromAlt];
+
+      // If not found, try our comprehensive mapping
+      if (!team) {
+        const mappedShortName = teamNameMappings[teamNameFromAlt];
+        if (mappedShortName) {
+          team = teamsDataByShortName[mappedShortName];
+        }
+      }
+
+      // If still not found, try to find by full team name
+      if (!team) {
+        team = Object.values(teamsDataById).find(
+          (t) => t.name === teamNameFromAlt
+        );
+      }
+
+      if (team) {
+        const foundPlayer = candidates.find((p) => p.team === team.id);
+        if (foundPlayer) {
+          return foundPlayer;
+        }
+      }
+    }
+  }
+
+  // Tier 3: Fixture-Based Disambiguation (fallback)
   const pitchElement = button.closest(
     "div[class*='PitchElementData__ElementWrapper']"
   );
@@ -75,15 +136,14 @@ const getPlayerForButton = async (button) => {
               (f.team_a === p.team && f.team_h === opponentTeam.id)
           )
         );
-        if (foundPlayer) return foundPlayer;
+        if (foundPlayer) {
+          return foundPlayer;
+        }
       }
     }
   }
 
-  // Tier 3: Selection-Based Fallback
-  console.warn(
-    `Could not disambiguate player '${playerName}' via fixture list. Falling back to 'selected_by_percent'.`
-  );
+  // Tier 4: Selection-Based Fallback
 
   return candidates.reduce((a, b) =>
     parseFloat(a.selected_by_percent) > parseFloat(b.selected_by_percent)
@@ -93,11 +153,11 @@ const getPlayerForButton = async (button) => {
 };
 
 const setPlayerImage = (picture, player) => {
-  const img = picture.querySelector('img');
+  const img = picture.querySelector("img");
   if (!img || !player) return;
 
   const playerName = player.web_name;
-  const photoCode = player.photo.replace('.jpg', '');
+  const photoCode = player.photo.replace(".jpg", "");
 
   const urlsToTry = [
     {
@@ -113,13 +173,13 @@ const setPlayerImage = (picture, player) => {
   const tryLoadImage = (index) => {
     if (index >= urlsToTry.length) {
       img.src =
-        'https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png';
-      const sources = picture.querySelectorAll('source');
+        "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
+      const sources = picture.querySelectorAll("source");
       sources.forEach((source) => {
         source.srcset =
-          'https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png';
+          "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
       });
-      picture.setAttribute('data-last-player', playerName);
+      picture.setAttribute("data-last-player", playerName);
       return;
     }
 
@@ -128,15 +188,15 @@ const setPlayerImage = (picture, player) => {
     image.src = url;
 
     image.onload = () => {
-      const sources = picture.querySelectorAll('source');
+      const sources = picture.querySelectorAll("source");
       sources.forEach((source) => {
         source.srcset = `${url} 1x, ${url2x} 2x`;
         source.sizes =
-          '(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px';
+          "(min-width: 1024px) 84px, (min-width: 610px) 64px, 46px";
       });
       img.src = url;
       img.style.cssText = `position: absolute; top: 0; left: 0; right: 30%; width: 100%; height: 110%; object-fit: cover; object-position: top center; padding-top: 10%; padding-bottom: 20%;`;
-      picture.setAttribute('data-last-player', playerName);
+      picture.setAttribute("data-last-player", playerName);
     };
 
     image.onerror = () => {
@@ -148,11 +208,11 @@ const setPlayerImage = (picture, player) => {
 };
 
 const replaceShirtImageForButton = async (button) => {
-  const picture = button.querySelector('picture');
+  const picture = button.querySelector("picture");
   if (picture) {
     const player = await getPlayerForButton(button);
     if (player) {
-      const lastPlayerName = picture.getAttribute('data-last-player');
+      const lastPlayerName = picture.getAttribute("data-last-player");
       if (lastPlayerName !== player.web_name) {
         setPlayerImage(picture, player);
       }
@@ -173,8 +233,8 @@ const observePlayerButtons = () => {
     const buttonObserver = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (
-          mutation.type === 'attributes' &&
-          mutation.attributeName === 'aria-label'
+          mutation.type === "attributes" &&
+          mutation.attributeName === "aria-label"
         ) {
           await replaceShirtImageForButton(button);
         }
@@ -182,7 +242,7 @@ const observePlayerButtons = () => {
     });
     buttonObserver.observe(button, {
       attributes: true,
-      attributeFilter: ['aria-label'],
+      attributeFilter: ["aria-label"],
     });
   });
 };
