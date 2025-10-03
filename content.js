@@ -69,7 +69,14 @@ const fetchFixtures = async () => {
 };
 
 const getPlayerForButton = async (button) => {
-  const playerName = button.getAttribute("aria-label");
+  // Prefer explicit aria-label when present; otherwise derive from visible name span
+  let playerName = button.getAttribute("aria-label");
+  if (!playerName) {
+    const nameSpan = button.querySelector("span[class*='_174gkcl']");
+    if (nameSpan) {
+      playerName = nameSpan.textContent.trim();
+    }
+  }
   if (!playerName || !playersData[playerName]) {
     return null;
   }
@@ -117,16 +124,18 @@ const getPlayerForButton = async (button) => {
   }
 
   // Tier 3: Fixture-Based Disambiguation (fallback)
-  const pitchElement = button.closest(
-    "div[class*='PitchElementData__ElementWrapper']"
-  );
-  if (pitchElement) {
-    const teamNameElement = pitchElement.querySelector(
-      "div[class*='PitchElementData__TeamName']"
-    );
-    if (teamNameElement) {
-      const opponentShortName = teamNameElement.textContent.trim();
-      const opponentTeam = teamsDataByShortName[opponentShortName];
+  // New DOM shows fixture text inside an element with data-fixture-bar
+  const fixtureBar =
+    button.querySelector("[data-fixture-bar='true']") ||
+    button.parentElement?.querySelector("[data-fixture-bar='true']");
+  if (fixtureBar) {
+    const fixtureSpan =
+      fixtureBar.querySelector("span[aria-label^='Gameweek Fixture']") ||
+      fixtureBar.querySelector("span");
+    if (fixtureSpan) {
+      const fixtureText = fixtureSpan.textContent.trim(); // e.g. "WHU (H)"
+      const opponentShort = fixtureText.split(" ")[0];
+      const opponentTeam = teamsDataByShortName[opponentShort];
       if (opponentTeam) {
         await fetchFixtures();
         const foundPlayer = candidates.find((p) =>
@@ -222,7 +231,7 @@ const replaceShirtImageForButton = async (button) => {
 
 const observePlayerButtons = () => {
   const buttons = document.querySelectorAll(
-    '._1k6tww10 button[data-pitch-element="true"]'
+    'button[data-pitch-element="true"]'
   );
   buttons.forEach((button) => {
     if (button._playerObserverAttached) return;
@@ -233,8 +242,10 @@ const observePlayerButtons = () => {
     const buttonObserver = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "aria-label"
+          (mutation.type === "attributes" &&
+            mutation.attributeName === "aria-label") ||
+          mutation.type === "childList" ||
+          mutation.type === "characterData"
         ) {
           await replaceShirtImageForButton(button);
         }
@@ -242,7 +253,8 @@ const observePlayerButtons = () => {
     });
     buttonObserver.observe(button, {
       attributes: true,
-      attributeFilter: ["aria-label"],
+      childList: true,
+      subtree: true,
     });
   });
 };
@@ -260,7 +272,7 @@ const waitForPitchElementsAndObserve = (maxAttempts = 20, interval = 150) => {
   let attempts = 0;
   const check = () => {
     const buttons = document.querySelectorAll(
-      '._1k6tww10 button[data-pitch-element="true"]'
+      'button[data-pitch-element="true"]'
     );
     if (buttons.length > 0 && buttons.length === lastCount) {
       fetchPlayerData().then(() => {

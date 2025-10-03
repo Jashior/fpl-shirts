@@ -1,17 +1,17 @@
 /* Only apply styles to images within a button on the main pitch area */
-._1k6tww10 button[data-pitch-element="true"] img.e4m1qw0 {
+button[data-pitch-element="true"] img.e4m1qw0 {
     background-color: transparent;
     border-radius: 0;
 }
 
 /* This is the container for the player info on the pitch */
-._1k6tww10 button[data-pitch-element="true"] ._5supsj3 {
+button[data-pitch-element="true"] ._5supsj3 {
     position: relative; /* Anchor for the price overlay */
     height: 100%;
 }
 
 /* Style for the player's price to overlay it on the photo */
-._1k6tww10 button[data-pitch-element="true"] ._5supsj4 {
+button[data-pitch-element="true"] ._5supsj4 {
     position: absolute;
     top: 5px; /* Position it 5px from the top */
     left: 0;
@@ -31,6 +31,6 @@
 }
 
 /* Ensure the info/substitute icons are on top of the player photo and price */
-._1k6tww10 .rbwqxk1, ._1k6tww10 .rbwqxk4 {
+.rbwqxk1, .rbwqxk4 {
     z-index: 2;
 }
